@@ -51,6 +51,10 @@ namespace who_admin
             dataGridView1.Columns.Add("Source", "Источник");
             dataGridView1.Columns.Add("ExpandedFrom", "Развёрнуто из");
 
+            // Debug: вывести имена колонок в Output
+            foreach (DataGridViewColumn c in dataGridView1.Columns)
+                System.Diagnostics.Debug.WriteLine($"{c.Index}: {c.Name} / {c.HeaderText}");
+
             // Настройка NumericUpDown
             numericUpDownThreads.Minimum = 1;
             numericUpDownThreads.Maximum = 128;
@@ -220,7 +224,14 @@ namespace who_admin
 
                 foreach (var r in all)
                 {
-                    dataGridView1.Rows.Add(null, r.Computer, r.Status, r.MemberType, r.Account, r.Source, r.ExpandedFrom);
+                    int idx = dataGridView1.Rows.Add();
+                    var row = dataGridView1.Rows[idx];
+                    row.Cells["Computer"].Value     = r.Computer;
+                    row.Cells["Status"].Value       = r.Status;
+                    row.Cells["MemberType"].Value   = r.MemberType;
+                    row.Cells["Account"].Value      = r.Account;
+                    row.Cells["Source"].Value       = r.Source;
+                    row.Cells["ExpandedFrom"].Value = r.ExpandedFrom;
                 }
 
                 labelStatus.Text = $"Готово: {computers.Count} ПК. Ошибок: {errors.Count}.";
@@ -280,36 +291,40 @@ namespace who_admin
             }
         }
 
+        // Мгновенно добавить/обновить запись в таблице после удачного добавления в группу
         void AppendOrUpdateRow(string computer, string account, string memberType, string status = "OK")
         {
             if (InvokeRequired) { Invoke(new Action(() => AppendOrUpdateRow(computer, account, memberType, status))); return; }
 
-            // Ищем существующую строку
+            // 1) ищем уже существующую строку для (ПК, аккаунт)
             foreach (DataGridViewRow r in dataGridView1.Rows)
             {
-                var pc  = r.Cells["Computer"].Value?.ToString();
-                var acc = r.Cells["Account"].Value?.ToString();
+                var pc  = r.Cells["Computer"]?.Value?.ToString();
+                var acc = r.Cells["Account"]?.Value?.ToString();
                 if (string.Equals(pc, computer, StringComparison.OrdinalIgnoreCase) &&
-                    string.Equals(acc, account, StringComparison.OrdinalIgnoreCase))
+                    string.Equals(acc, account,   StringComparison.OrdinalIgnoreCase))
                 {
-                    r.Cells["Status"].Value      = status;
-                    r.Cells["MemberType"].Value  = memberType;
-                    r.Cells["Source"].Value      = "NetAPI32";
-                    r.Cells["ExpandedFrom"].Value= "";
+                    r.Cells["Status"].Value       = status;
+                    r.Cells["MemberType"].Value   = memberType;
+                    r.Cells["Source"].Value       = "NetAPI32";
+                    r.Cells["ExpandedFrom"].Value = "";
                     return;
                 }
             }
 
-            // ВАЖНО: первая колонка — кнопка. Для неё кладём null-плейсхолдер.
-            dataGridView1.Rows.Add(
-                null,               // colDelete (кнопка)
-                computer,           // Computer
-                status,             // Status
-                memberType,         // MemberType
-                account,            // Account
-                "NetAPI32",         // Source
-                ""                  // ExpandedFrom
-            );
+            // 2) создаём строку и заполняем по ИМЕНАМ колонок (порядок колонок неважен)
+            int idx = dataGridView1.Rows.Add();
+            var row = dataGridView1.Rows[idx];
+            row.Cells["Computer"].Value     = computer;
+            row.Cells["Status"].Value       = status;
+            row.Cells["MemberType"].Value   = memberType;
+            row.Cells["Account"].Value      = account;
+            row.Cells["Source"].Value       = "NetAPI32";
+            row.Cells["ExpandedFrom"].Value = "";
+
+            // подсветить и прокрутить к новой строке
+            try { dataGridView1.FirstDisplayedScrollingRowIndex = idx; } catch { /* не критично */ }
+            row.Selected = true;
         }
 
         async void Grid_CellContentClick(object? sender, DataGridViewCellEventArgs e)
