@@ -59,12 +59,30 @@ namespace who_admin
             [MarshalAs(UnmanagedType.LPWStr)] public string lgrmi2_domainandname; // "DOMAIN\\Name"
         }
 
+        // --- NetAPI32 добавление/удаление ---
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        struct LOCALGROUP_MEMBERS_INFO_3
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string lgrmi3_domainandname; // "DOMAIN\\Name" или "COMPUTER\\Name"
+        }
+
         // --- P/Invoke ---
         [DllImport("Netapi32.dll", CharSet = CharSet.Unicode)]
         static extern int NetLocalGroupGetMembers(
             string servername, string localgroupname, int level,
             out IntPtr bufptr, int prefmaxlen,
             out int entriesread, out int totalentries, IntPtr resume_handle);
+
+        [DllImport("Netapi32.dll", CharSet = CharSet.Unicode)]
+        static extern int NetLocalGroupAddMembers(
+            string servername, string groupname, int level,
+            IntPtr buf, int totalentries);
+
+        [DllImport("Netapi32.dll", CharSet = CharSet.Unicode)]
+        static extern int NetLocalGroupDelMembers(
+            string servername, string groupname, int level,
+            IntPtr buf, int totalentries);
 
         [DllImport("Netapi32.dll")] static extern int NetApiBufferFree(IntPtr Buffer);
 
@@ -74,6 +92,10 @@ namespace who_admin
             StringBuilder Name, ref uint cchName,
             StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName,
             out SID_NAME_USE peUse);
+
+        // Исправленный LocalFree — в kernel32!
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern IntPtr LocalFree(IntPtr hMem);
 
         // --- Public API ---
         public static IEnumerable<(string Account, string Type, string ExpandedFrom)> GetMembers(string computer)
@@ -99,6 +121,36 @@ namespace who_admin
                 }
             }
             finally { NetApiBufferFree(buf); }
+        }
+
+        public static void AddLocalAdmin(string computer, string domainBackslashName)
+        {
+            string admins = GetLocalGroupNameBySid(computer, "S-1-5-32-544"); // локализованное имя
+            var entry = new LOCALGROUP_MEMBERS_INFO_3 { lgrmi3_domainandname = domainBackslashName };
+            IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf<LOCALGROUP_MEMBERS_INFO_3>());
+            try
+            {
+                Marshal.StructureToPtr(entry, p, false);
+                int st = NetLocalGroupAddMembers(@"\\\\" + computer, admins, 3, p, 1);
+                // 1378 = ERROR_MEMBER_IN_ALIAS — уже состоит в группе, не считаем за ошибку
+                if (st != 0 && st != 1378) throw new Win32Exception(st);
+            }
+            finally { Marshal.FreeHGlobal(p); }
+        }
+
+        public static void RemoveLocalAdmin(string computer, string domainBackslashName)
+        {
+            string admins = GetLocalGroupNameBySid(computer, "S-1-5-32-544");
+            var entry = new LOCALGROUP_MEMBERS_INFO_3 { lgrmi3_domainandname = domainBackslashName };
+            IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf<LOCALGROUP_MEMBERS_INFO_3>());
+            try
+            {
+                Marshal.StructureToPtr(entry, p, false);
+                int st = NetLocalGroupDelMembers(@"\\\\" + computer, admins, 3, p, 1);
+                // 1377 = ERROR_NO_SUCH_MEMBER — уже нет в группе, ок
+                if (st != 0 && st != 1377) throw new Win32Exception(st);
+            }
+            finally { Marshal.FreeHGlobal(p); }
         }
 
         // --- Helpers ---

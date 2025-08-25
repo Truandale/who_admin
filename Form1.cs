@@ -9,6 +9,8 @@ namespace who_admin
     public partial class Form1 : Form
     {
         private CancellationTokenSource? cts;
+        private TextBox? txtAddAccounts;
+        private Button? btnAddToSelected, btnAddToAll;
 
         public Form1()
         {
@@ -32,6 +34,18 @@ namespace who_admin
 
             // Добавление колонок
             dataGridView1.Columns.Clear();
+            
+            // Кнопка-колонка "Удалить" в начале таблицы
+            var colDel = new DataGridViewButtonColumn
+            {
+                Name = "colDelete",
+                HeaderText = "Действие",
+                Text = "Удалить",
+                UseColumnTextForButtonValue = true,
+                Width = 90
+            };
+            dataGridView1.Columns.Add(colDel);
+            
             dataGridView1.Columns.Add("Computer", "Компьютер");
             dataGridView1.Columns.Add("Status", "Статус");
             dataGridView1.Columns.Add("MemberType", "Тип члена");
@@ -47,11 +61,44 @@ namespace who_admin
             // Настройка кнопок
             buttonStop.Enabled = false;
 
+            // Панель добавления аккаунтов
+            var lblAdd = new Label { 
+                Location = new Point(20, 635), 
+                Size = new Size(80, 23), 
+                Text = "Добавить:",
+                Anchor = AnchorStyles.Left | AnchorStyles.Bottom
+            };
+            txtAddAccounts = new TextBox { 
+                Location = new Point(100, 632), 
+                Size = new Size(650, 23), 
+                Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+                PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser"
+            };
+            btnAddToSelected = new Button { 
+                Location = new Point(760, 630), 
+                Size = new Size(200, 27), 
+                Text = "Добавить на выбранные ПК", 
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
+            };
+            btnAddToAll = new Button { 
+                Location = new Point(970, 630), 
+                Size = new Size(120, 27), 
+                Text = "Добавить на все ПК", 
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
+            };
+
+            Controls.AddRange(new Control[] { lblAdd, txtAddAccounts, btnAddToSelected, btnAddToAll });
+
             // Привязка событий
             buttonLoadFromAD.Click += async (s, e) => await LoadComputersFromAD();
             buttonScan.Click += async (s, e) => await ScanAsync();
             buttonStop.Click += (s, e) => cts?.Cancel();
             buttonExport.Click += (s, e) => ExportCsv();
+            
+            // События управления членством
+            dataGridView1.CellContentClick += Grid_CellContentClick;
+            btnAddToSelected.Click += async (s, e) => await AddMembersAsync("selected");
+            btnAddToAll.Click += async (s, e) => await AddMembersAsync("all");
 
             // Настройка статус-бара
             labelStatus.Text = "Готов к работе";
@@ -203,7 +250,7 @@ namespace who_admin
 
                 foreach (var r in all)
                 {
-                    dataGridView1.Rows.Add(r.Computer, r.Status, r.MemberType, r.Account, r.Source, r.ExpandedFrom);
+                    dataGridView1.Rows.Add("Удалить", r.Computer, r.Status, r.MemberType, r.Account, r.Source, r.ExpandedFrom);
                 }
 
                 labelStatus.Text = $"Готово: {computers.Count} ПК. Ошибок: {errors.Count}.";
@@ -232,19 +279,23 @@ namespace who_admin
             }
 
             var sb = new StringBuilder();
-            // Заголовок
-            sb.AppendLine("Computer;Status;MemberType;Account;Source;ExpandedFrom");
+            // Заголовок (пропускаем колонку кнопки)
+            var headerCols = dataGridView1.Columns.Cast<DataGridViewColumn>()
+                .Where(c => c.Name != "colDelete")
+                .Select(c => c.HeaderText);
+            sb.AppendLine(string.Join(";", headerCols));
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                string[] cells = new string[dataGridView1.Columns.Count];
+                var cells = new List<string>();
                 for (int i = 0; i < dataGridView1.Columns.Count; i++)
                 {
+                    if (dataGridView1.Columns[i].Name == "colDelete") continue; // пропускаем колонку кнопки
                     var val = row.Cells[i].Value?.ToString() ?? "";
                     // Экраним ; и "
                     if (val.Contains(";") || val.Contains("\""))
                         val = "\"" + val.Replace("\"", "\"\"") + "\"";
-                    cells[i] = val;
+                    cells.Add(val);
                 }
                 sb.AppendLine(string.Join(";", cells));
             }
@@ -256,6 +307,152 @@ namespace who_admin
                     System.IO.File.WriteAllText(sfd.FileName, sb.ToString(), Encoding.UTF8);
                     MessageBox.Show("Экспортировано: " + sfd.FileName, "Готово", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+        }
+
+        async void Grid_CellContentClick(object? sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if (dataGridView1.Columns[e.ColumnIndex].Name != "colDelete") return;
+
+            var row = dataGridView1.Rows[e.RowIndex];
+            string computer = row.Cells["Computer"].Value?.ToString() ?? "";
+            string source = row.Cells["Source"].Value?.ToString() ?? "";
+            string expanded = row.Cells["ExpandedFrom"].Value?.ToString() ?? "";
+            string account = row.Cells["Account"].Value?.ToString() ?? "";
+
+            // Удаляем ТОЛЬКО прямых членов из NetAPI32 (не развёрнутых из доменных групп)
+            if (source != "NetAPI32" || !string.IsNullOrEmpty(expanded) || string.IsNullOrWhiteSpace(account))
+            {
+                MessageBox.Show("Удалять можно только прямых членов локальной группы (Источник=NetAPI32, 'Развёрнуто из' — пусто).", "Ограничение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Удалить '{account}' из локальной группы Администраторы на {computer}?",
+                "Подтверждение",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes) return;
+
+            UseWaitCursor = true;
+            row.Cells["Status"].Value = "Удаление…";
+
+            try
+            {
+                await Task.Run(() => LocalAdminsReader.RemoveLocalAdmin(computer, account));
+                // если успешно — можно удалить строку из гриды или перезагрузить ПК
+                dataGridView1.Rows.RemoveAt(e.RowIndex);
+            }
+            catch (Exception ex)
+            {
+                row.Cells["Status"].Value = "Ошибка: " + ex.Message;
+            }
+            finally
+            {
+                UseWaitCursor = false;
+            }
+        }
+
+        async Task AddMembersAsync(string target)
+        {
+            // список аккаунтов из текстбокса
+            var accounts = txtAddAccounts?.Text?
+                .Split(new[] { ';', ',', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => x.Contains("\\"))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
+
+            if (accounts.Count == 0)
+            {
+                MessageBox.Show("Укажи аккаунты вида DOMAIN\\User; DOMAIN\\Group; COMPUTER\\LocalUser", "Нет данных", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // целевые компьютеры
+            List<string> computers;
+            if (target == "selected")
+            {
+                // ПК из выделенных строк таблицы
+                var fromGrid = dataGridView1.SelectedRows
+                    .Cast<DataGridViewRow>()
+                    .Select(r => r.Cells["Computer"].Value?.ToString())
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                if (fromGrid.Count == 0)
+                {
+                    MessageBox.Show("Выдели строки таблицы (хотя бы по одной на ПК), или используй 'Добавить на все ПК'.", "Нет выбранных ПК", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                computers = fromGrid!;
+            }
+            else
+            {
+                // все ПК из левого списка/бокса
+                computers = textBoxComputers.Text
+                    .Split(new[] { '\r', '\n', '\t', ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .Where(x => x.Length > 0)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            if (computers.Count == 0)
+            {
+                MessageBox.Show("Список ПК пуст.", "Нет ПК", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            UseWaitCursor = true;
+            if (btnAddToSelected != null) btnAddToSelected.Enabled = false;
+            if (btnAddToAll != null) btnAddToAll.Enabled = false;
+            labelStatus.Text = $"Добавление на {computers.Count} ПК…";
+            progressBar1.Value = 0; 
+            progressBar1.Maximum = computers.Count;
+
+            var dop = (int)numericUpDownThreads.Value;
+            var errors = new ConcurrentBag<string>();
+            int done = 0;
+
+            try
+            {
+                await Task.Run(() =>
+                {
+                    Parallel.ForEach(computers, new ParallelOptions { MaxDegreeOfParallelism = dop }, pc =>
+                    {
+                        try
+                        {
+                            foreach (var acc in accounts) LocalAdminsReader.AddLocalAdmin(pc, acc);
+                        }
+                        catch (Exception ex)
+                        {
+                            errors.Add($"{pc}: {ex.Message}");
+                        }
+                        finally
+                        {
+                            Interlocked.Increment(ref done);
+                            Invoke(new Action(() =>
+                            {
+                                progressBar1.Value = done;
+                                labelStatus.Text = $"Добавление: {done}/{computers.Count}";
+                            }));
+                        }
+                    });
+                });
+
+                if (errors.Count == 0)
+                    MessageBox.Show("Готово без ошибок.", "Добавление", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                else
+                    MessageBox.Show("Часть ПК с ошибками:\n" + string.Join("\n", errors.Take(20)) + (errors.Count > 20 ? $"\n… и ещё {errors.Count - 20}" : ""), "Добавление", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                if (btnAddToSelected != null) btnAddToSelected.Enabled = true;
+                if (btnAddToAll != null) btnAddToAll.Enabled = true;
+                UseWaitCursor = false;
             }
         }
     }
