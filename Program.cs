@@ -42,6 +42,8 @@ namespace who_admin
         public string Account { get; set; } = "";
     }
 
+    enum AddResult { Added, AlreadyMember }
+
     static class LocalAdminsReader
     {
         // --- WinAPI enums/structs ---
@@ -154,6 +156,25 @@ namespace who_admin
             finally { Marshal.FreeHGlobal(p); }
         }
 
+        public static AddResult AddLocalAdminEx(string computer, string domainBackslashName)
+        {
+            string admins = GetLocalGroupNameBySid(computer, "S-1-5-32-544");
+            var entry = new LOCALGROUP_MEMBERS_INFO_3 { lgrmi3_domainandname = domainBackslashName };
+            IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf<LOCALGROUP_MEMBERS_INFO_3>());
+            try
+            {
+                Marshal.StructureToPtr(entry, p, false);
+                string serverName = computer.Equals("localhost", StringComparison.OrdinalIgnoreCase) || 
+                                   computer.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase) 
+                                   ? null! : @"\\" + computer;
+                int st = NetLocalGroupAddMembers(serverName, admins, 3, p, 1);
+                if (st == 0) return AddResult.Added;              // добавлено
+                if (st == 1378) return AddResult.AlreadyMember;   // ERROR_MEMBER_IN_ALIAS
+                throw new Win32Exception(st);
+            }
+            finally { Marshal.FreeHGlobal(p); }
+        }
+
         public static void RemoveLocalAdmin(string computer, string domainBackslashName)
         {
             string admins = GetLocalGroupNameBySid(computer, "S-1-5-32-544");
@@ -174,15 +195,14 @@ namespace who_admin
 
         public static string DetectAccountType(string computer, string domainBackslashName)
         {
-            // Пытаемся определить тип через LookupAccountName
-            // Для локальных аккаунтов лучше указывать systemName = имя ПК
+            // аккуратно определяем тип через LookupAccountName
             string? systemName = null;
             string accountName = domainBackslashName;
 
             var parts = domainBackslashName.Split('\\');
             if (parts.Length == 2 && parts[0].Equals(computer, StringComparison.OrdinalIgnoreCase))
             {
-                systemName = computer;
+                systemName = computer;  // локальный пользователь — спрашиваем на целевом ПК
                 accountName = parts[1];
             }
 
@@ -197,7 +217,9 @@ namespace who_admin
                 if (!LookupAccountName(systemName ?? "", accountName, sid, ref cbSid, dom, ref cchDom, out var use))
                     return "Учетная запись";
 
-                return (use == SID_NAME_USE.SidTypeUser || use == SID_NAME_USE.SidTypeComputer) ? "Пользователь" : "Группа";
+                return (use == SID_NAME_USE.SidTypeUser || use == SID_NAME_USE.SidTypeComputer) ? "Локальный пользователь" :
+                       (use == SID_NAME_USE.SidTypeGroup || use == SID_NAME_USE.SidTypeAlias   ) ? "Доменная группа/алиас" :
+                       "Доменный пользователь";
             }
             finally { Marshal.FreeHGlobal(sid); }
         }

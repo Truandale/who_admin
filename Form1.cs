@@ -220,7 +220,7 @@ namespace who_admin
 
                 foreach (var r in all)
                 {
-                    dataGridView1.Rows.Add("Удалить", r.Computer, r.Status, r.MemberType, r.Account, r.Source, r.ExpandedFrom);
+                    dataGridView1.Rows.Add(null, r.Computer, r.Status, r.MemberType, r.Account, r.Source, r.ExpandedFrom);
                 }
 
                 labelStatus.Text = $"Готово: {computers.Count} ПК. Ошибок: {errors.Count}.";
@@ -280,21 +280,36 @@ namespace who_admin
             }
         }
 
-        void AppendRowIfMissing(string computer, string account, string memberType)
+        void AppendOrUpdateRow(string computer, string account, string memberType, string status = "OK")
         {
-            // Добавляем строку только если такой пары (ПК+учетка) ещё нет
-            if (InvokeRequired) { Invoke(new Action(() => AppendRowIfMissing(computer, account, memberType))); return; }
+            if (InvokeRequired) { Invoke(new Action(() => AppendOrUpdateRow(computer, account, memberType, status))); return; }
 
+            // Ищем существующую строку
             foreach (DataGridViewRow r in dataGridView1.Rows)
             {
-                var pc = r.Cells["Computer"].Value?.ToString();
+                var pc  = r.Cells["Computer"].Value?.ToString();
                 var acc = r.Cells["Account"].Value?.ToString();
                 if (string.Equals(pc, computer, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(acc, account, StringComparison.OrdinalIgnoreCase))
+                {
+                    r.Cells["Status"].Value      = status;
+                    r.Cells["MemberType"].Value  = memberType;
+                    r.Cells["Source"].Value      = "NetAPI32";
+                    r.Cells["ExpandedFrom"].Value= "";
                     return;
+                }
             }
 
-            dataGridView1.Rows.Add("Удалить", computer, "OK", memberType, account, "NetAPI32", "");
+            // ВАЖНО: первая колонка — кнопка. Для неё кладём null-плейсхолдер.
+            dataGridView1.Rows.Add(
+                null,               // colDelete (кнопка)
+                computer,           // Computer
+                status,             // Status
+                memberType,         // MemberType
+                account,            // Account
+                "NetAPI32",         // Source
+                ""                  // ExpandedFrom
+            );
         }
 
         async void Grid_CellContentClick(object? sender, DataGridViewCellEventArgs e)
@@ -414,10 +429,10 @@ namespace who_admin
                         {
                             foreach (var acc in accounts)
                             {
-                                LocalAdminsReader.AddLocalAdmin(pc, acc); // вернётся норм, даже если уже член (мы игнорим 1378)
-                                // >>> МГНОВЕННОЕ ОТОБРАЖЕНИЕ В UI <<<
+                                var res = LocalAdminsReader.AddLocalAdminEx(pc, acc);           // кидает Win32Exception, если ошибка
                                 var t = LocalAdminsReader.DetectAccountType(pc, acc);
-                                AppendRowIfMissing(pc, acc, t);
+                                var status = (res == AddResult.AlreadyMember) ? "Уже состоит" : "Добавлено";
+                                AppendOrUpdateRow(pc, acc, t, status);        // << мгновенно в таблицу
                             }
                         }
                         catch (Exception ex)
