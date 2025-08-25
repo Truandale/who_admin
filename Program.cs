@@ -208,7 +208,7 @@ namespace who_admin
                                     Status = "Ошибка: " + ex.Message,
                                     MemberType = "",
                                     Account = "",
-                                    Source = "WMI",
+                                    Source = "NetAPI32",
                                     ExpandedFrom = ""
                                 });
                             }
@@ -459,12 +459,6 @@ namespace who_admin
         [DllImport("Netapi32.dll")] static extern int NetApiBufferFree(IntPtr Buffer);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern bool ConvertStringSidToSid(string StringSid, out IntPtr Sid);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        static extern IntPtr LocalFree(IntPtr hMem);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         static extern bool LookupAccountSid(
             string lpSystemName, IntPtr Sid,
             StringBuilder Name, ref uint cchName,
@@ -500,19 +494,23 @@ namespace who_admin
         // --- Helpers ---
         static string GetLocalGroupNameBySid(string computer, string sidStr)
         {
-            if (!ConvertStringSidToSid(sidStr, out var sidPtr))
-                throw new Win32Exception(Marshal.GetLastWin32Error());
+            // Используем .NET SecurityIdentifier вместо ConvertStringSidToSid для избежания LocalFree
+            var sid = new System.Security.Principal.SecurityIdentifier(sidStr);
+            byte[] buf = new byte[sid.BinaryLength];
+            sid.GetBinaryForm(buf, 0);
+            IntPtr pSid = Marshal.AllocHGlobal(buf.Length);
             try
             {
+                Marshal.Copy(buf, 0, pSid, buf.Length);
                 uint cchName = 0, cchDom = 0;
-                LookupAccountSid(computer, sidPtr, null!, ref cchName, null!, ref cchDom, out _); // размер буферов
+                LookupAccountSid(computer, pSid, null!, ref cchName, null!, ref cchDom, out _); // размер буферов
                 var name = new StringBuilder((int)cchName);
                 var dom = new StringBuilder((int)cchDom);
-                if (!LookupAccountSid(computer, sidPtr, name, ref cchName, dom, ref cchDom, out _))
+                if (!LookupAccountSid(computer, pSid, name, ref cchName, dom, ref cchDom, out _))
                     throw new Win32Exception(Marshal.GetLastWin32Error());
                 return name.ToString(); // локализованное имя локальной группы на целевом ПК
             }
-            finally { LocalFree(sidPtr); }
+            finally { Marshal.FreeHGlobal(pSid); }
         }
 
         static string SidToString(IntPtr sid)
