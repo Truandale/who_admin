@@ -9,8 +9,6 @@ namespace who_admin
     public partial class Form1 : Form
     {
         private CancellationTokenSource? cts;
-        private TextBox? txtAddAccounts;
-        private Button? btnAddToSelected, btnAddToAll;
 
         public Form1()
         {
@@ -61,32 +59,6 @@ namespace who_admin
             // Настройка кнопок
             buttonStop.Enabled = false;
 
-            // Панель добавления аккаунтов
-            var lblAdd = new Label { 
-                Location = new Point(20, 615), 
-                Size = new Size(80, 23), 
-                Text = "Добавить:",
-                Anchor = AnchorStyles.Left | AnchorStyles.Bottom
-            };
-            txtAddAccounts = new TextBox { 
-                Location = new Point(100, 612), 
-                Size = new Size(650, 23), 
-                Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
-                PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser"
-            };
-            btnAddToSelected = new Button { 
-                Location = new Point(760, 610), 
-                Size = new Size(150, 27), 
-                Text = "На выбранные ПК", 
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
-            };
-            btnAddToAll = new Button { 
-                Location = new Point(920, 610), 
-                Size = new Size(100, 27), 
-                Text = "На все ПК", 
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
-            };
-
             // Привязка событий
             buttonLoadFromAD.Click += async (s, e) => await LoadComputersFromAD();
             buttonScan.Click += async (s, e) => await ScanAsync();
@@ -95,24 +67,11 @@ namespace who_admin
             
             // События управления членством
             dataGridView1.CellContentClick += Grid_CellContentClick;
-            btnAddToSelected.Click += async (s, e) => await AddMembersAsync("selected");
-            btnAddToAll.Click += async (s, e) => await AddMembersAsync("all");
+            buttonAddToSelected.Click += async (s, e) => await AddMembersAsync("selected");
+            buttonAddToAll.Click += async (s, e) => await AddMembersAsync("all");
 
             // Настройка статус-бара
             labelStatus.Text = "Готов к работе";
-
-            // Добавляем элементы управления для добавления/удаления в конце
-            // чтобы они были поверх GroupBox контролов
-            Controls.Add(lblAdd);
-            Controls.Add(txtAddAccounts);
-            Controls.Add(btnAddToSelected);
-            Controls.Add(btnAddToAll);
-            
-            // Поднимаем их на передний план
-            lblAdd.BringToFront();
-            txtAddAccounts?.BringToFront();
-            btnAddToSelected?.BringToFront();
-            btnAddToAll?.BringToFront();
         }
 
         async Task LoadComputersFromAD()
@@ -368,7 +327,7 @@ namespace who_admin
         async Task AddMembersAsync(string target)
         {
             // список аккаунтов из текстбокса
-            var accounts = txtAddAccounts?.Text?
+            var accounts = textBoxAddMembers?.Text?
                 .Split(new[] { ';', ',', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Where(x => x.Contains("\\"))
@@ -418,8 +377,8 @@ namespace who_admin
             }
 
             UseWaitCursor = true;
-            if (btnAddToSelected != null) btnAddToSelected.Enabled = false;
-            if (btnAddToAll != null) btnAddToAll.Enabled = false;
+            buttonAddToSelected.Enabled = false;
+            buttonAddToAll.Enabled = false;
             labelStatus.Text = $"Добавление на {computers.Count} ПК…";
             progressBar1.Value = 0; 
             progressBar1.Maximum = computers.Count;
@@ -461,8 +420,8 @@ namespace who_admin
             }
             finally
             {
-                if (btnAddToSelected != null) btnAddToSelected.Enabled = true;
-                if (btnAddToAll != null) btnAddToAll.Enabled = true;
+                buttonAddToSelected.Enabled = true;
+                buttonAddToAll.Enabled = true;
                 UseWaitCursor = false;
             }
         }

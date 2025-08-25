@@ -42,6 +42,10 @@
             this.groupBoxComputers = new System.Windows.Forms.GroupBox();
             this.groupBoxControls = new System.Windows.Forms.GroupBox();
             this.groupBoxResults = new System.Windows.Forms.GroupBox();
+            this.labelAddMembers = new System.Windows.Forms.Label();
+            this.textBoxAddMembers = new System.Windows.Forms.TextBox();
+            this.buttonAddToSelected = new System.Windows.Forms.Button();
+            this.buttonAddToAll = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreads)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.groupBoxComputers.SuspendLayout();
@@ -212,11 +216,55 @@
             this.groupBoxResults.TabStop = false;
             this.groupBoxResults.Text = "Результаты сканирования";
             // 
+            // labelAddMembers
+            // 
+            this.labelAddMembers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.labelAddMembers.AutoSize = true;
+            this.labelAddMembers.Location = new System.Drawing.Point(20, 615);
+            this.labelAddMembers.Name = "labelAddMembers";
+            this.labelAddMembers.Size = new System.Drawing.Size(63, 15);
+            this.labelAddMembers.TabIndex = 14;
+            this.labelAddMembers.Text = "Добавить:";
+            // 
+            // textBoxAddMembers
+            // 
+            this.textBoxAddMembers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxAddMembers.Location = new System.Drawing.Point(90, 612);
+            this.textBoxAddMembers.Name = "textBoxAddMembers";
+            this.textBoxAddMembers.PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser";
+            this.textBoxAddMembers.Size = new System.Drawing.Size(650, 23);
+            this.textBoxAddMembers.TabIndex = 15;
+            // 
+            // buttonAddToSelected
+            // 
+            this.buttonAddToSelected.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonAddToSelected.Location = new System.Drawing.Point(750, 610);
+            this.buttonAddToSelected.Name = "buttonAddToSelected";
+            this.buttonAddToSelected.Size = new System.Drawing.Size(150, 27);
+            this.buttonAddToSelected.TabIndex = 16;
+            this.buttonAddToSelected.Text = "На выбранные ПК";
+            this.buttonAddToSelected.UseVisualStyleBackColor = true;
+            // 
+            // buttonAddToAll
+            // 
+            this.buttonAddToAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonAddToAll.Location = new System.Drawing.Point(910, 610);
+            this.buttonAddToAll.Name = "buttonAddToAll";
+            this.buttonAddToAll.Size = new System.Drawing.Size(100, 27);
+            this.buttonAddToAll.TabIndex = 17;
+            this.buttonAddToAll.Text = "На все ПК";
+            this.buttonAddToAll.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1084, 681);
+            this.Controls.Add(this.buttonAddToAll);
+            this.Controls.Add(this.buttonAddToSelected);
+            this.Controls.Add(this.textBoxAddMembers);
+            this.Controls.Add(this.labelAddMembers);
             this.Controls.Add(this.groupBoxResults);
             this.Controls.Add(this.groupBoxControls);
             this.Controls.Add(this.groupBoxComputers);
@@ -252,5 +300,9 @@
         private GroupBox groupBoxComputers;
         private GroupBox groupBoxControls;
         private GroupBox groupBoxResults;
+        private Label labelAddMembers;
+        private TextBox textBoxAddMembers;
+        private Button buttonAddToSelected;
+        private Button buttonAddToAll;
     }
 }
