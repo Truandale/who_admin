@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Linq;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -254,94 +256,64 @@ namespace who_admin
         {
             var results = new List<ResultRow>();
 
-            var scope = new ManagementScope($@"\\{computer}\root\cimv2");
-            scope.Connect(); // бросит исключение при недоступности
-
-            // Находим локальную группу Администраторы по её универсальному SID
-            var grpSearcher = new ManagementObjectSearcher(scope,
-                new ObjectQuery("SELECT * FROM Win32_Group WHERE LocalAccount=True AND SID='S-1-5-32-544'"));
-
-            var groups = grpSearcher.Get().Cast<ManagementObject>().ToList();
-            if (groups.Count == 0)
-                throw new Exception("Не найдена локальная группа S-1-5-32-544 (Администраторы)");
-
-            var group = groups[0];
-            string groupName = (string?)group["Name"] ?? "";
-            string groupDomain = (string?)group["Domain"] ?? "";
-
-            // Получаем членов через ассоциацию
-            string assocQuery =
-                $"ASSOCIATORS OF {{Win32_Group.Domain='{EscapeWmi(groupDomain)}',Name='{EscapeWmi(groupName)}'}} " +
-                "WHERE AssocClass=Win32_GroupUser Role=GroupComponent";
-
-            var assoc = new ManagementObjectSearcher(scope, new ObjectQuery(assocQuery)).Get();
-
-            var directMembers = new List<(string Class, string Domain, string Name)>();
-            foreach (ManagementObject mo in assoc)
+            // Используем NetAPI32 вместо WMI для более надёжного получения членов группы
+            var directMembers = new List<(string Account, string Type)>();
+            
+            try
             {
-                string cls = mo.ClassPath.ClassName; // Win32_UserAccount или Win32_Group
-                string mDomain = (string?)mo["Domain"] ?? "";
-                string mName = (string?)mo["Name"] ?? "";
-                directMembers.Add((cls, mDomain, mName));
-
-                // Определяем тип более детально
-                string memberType;
-                string accountInfo = $"{mDomain}\\{mName}";
-                
-                if (cls == "Win32_Group")
+                var members = LocalAdminsReader.GetMembers(computer);
+                foreach (var member in members)
                 {
-                    memberType = mDomain.Equals(groupDomain, StringComparison.OrdinalIgnoreCase) 
-                        ? "Локальная группа" 
-                        : "Доменная группа";
-                }
-                else
-                {
-                    memberType = mDomain.Equals(groupDomain, StringComparison.OrdinalIgnoreCase) 
-                        ? "Локальный пользователь" 
-                        : "Доменный пользователь";
-                        
-                    // Для пользователей добавляем информацию о статусе
-                    try
+                    directMembers.Add((member.Account, member.Type));
+                    
+                    results.Add(new ResultRow
                     {
-                        bool? disabled = (bool?)mo["Disabled"];
-                        bool? lockout = (bool?)mo["Lockout"];
-                        
-                        if (disabled == true)
-                            accountInfo += " [ОТКЛЮЧЁН]";
-                        else if (lockout == true)
-                            accountInfo += " [ЗАБЛОКИРОВАН]";
-                    }
-                    catch { /* игнорируем ошибки получения статуса */ }
+                        Computer = computer,
+                        Status = "OK",
+                        MemberType = member.Type,
+                        Account = member.Account,
+                        Source = "NetAPI32",
+                        ExpandedFrom = ""
+                    });
                 }
-
-                results.Add(new ResultRow
-                {
-                    Computer = computer,
-                    Status = "OK",
-                    MemberType = memberType,
-                    Account = accountInfo,
-                    Source = "Win32_GroupUser",
-                    ExpandedFrom = ""
-                });
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Ошибка NetAPI32: {ex.Message}", ex);
             }
 
             if (expandDomainGroups)
             {
-                // Разворачиваем только доменные группы (Domain != имя компьютера)
-                foreach (var m in directMembers.Where(x => x.Class == "Win32_Group" && !x.Domain.Equals(groupDomain, StringComparison.OrdinalIgnoreCase)))
+                // Разворачиваем только доменные группы
+                foreach (var member in directMembers.Where(x => x.Type.Contains("Доменная группа")))
                 {
-                    var expandedMembers = ExpandDomainGroupMembersSafe(m.Domain, m.Name);
-                    foreach (var memberInfo in expandedMembers)
+                    try
                     {
-                        results.Add(new ResultRow
+                        // Извлекаем домен и имя группы из "DOMAIN\GroupName"
+                        var parts = member.Account.Split('\\');
+                        if (parts.Length == 2)
                         {
-                            Computer = computer,
-                            Status = "OK",
-                            MemberType = memberInfo.Type,
-                            Account = memberInfo.Account,
-                            Source = "AD (recursive)",
-                            ExpandedFrom = $"{m.Domain}\\{m.Name}"
-                        });
+                            string domain = parts[0];
+                            string groupName = parts[1];
+                            
+                            var expandedMembers = ExpandDomainGroupMembersSafe(domain, groupName);
+                            foreach (var memberInfo in expandedMembers)
+                            {
+                                results.Add(new ResultRow
+                                {
+                                    Computer = computer,
+                                    Status = "OK",
+                                    MemberType = memberInfo.Type,
+                                    Account = memberInfo.Account,
+                                    Source = "AD (recursive)",
+                                    ExpandedFrom = member.Account
+                                });
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // Игнорируем ошибки разворачивания отдельных групп
                     }
                 }
             }
@@ -406,7 +378,6 @@ namespace who_admin
             return results;
         }
 
-        static string EscapeWmi(string s) => s.Replace(@"\", @"\\").Replace("'", "''");
 
         void ExportCsv()
         {
@@ -458,6 +429,156 @@ namespace who_admin
         {
             public string Type { get; set; } = "";
             public string Account { get; set; } = "";
+        }
+    }
+
+    static class LocalAdminsReader
+    {
+        // --- WinAPI enums/structs ---
+        enum SID_NAME_USE : int
+        {
+            SidTypeUser = 1, SidTypeGroup, SidTypeDomain, SidTypeAlias, SidTypeWellKnownGroup,
+            SidTypeDeletedAccount, SidTypeInvalid, SidTypeUnknown, SidTypeComputer, SidTypeLabel
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        struct LOCALGROUP_MEMBERS_INFO_2
+        {
+            public IntPtr lgrmi2_sid;
+            public SID_NAME_USE lgrmi2_sidusage;
+            [MarshalAs(UnmanagedType.LPWStr)] public string lgrmi2_domainandname; // "DOMAIN\\Name"
+        }
+
+        // --- P/Invoke ---
+        [DllImport("Netapi32.dll", CharSet = CharSet.Unicode)]
+        static extern int NetLocalGroupGetMembers(
+            string servername, string localgroupname, int level,
+            out IntPtr bufptr, int prefmaxlen,
+            out int entriesread, out int totalentries, IntPtr resume_handle);
+
+        [DllImport("Netapi32.dll")] static extern int NetApiBufferFree(IntPtr Buffer);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern bool ConvertStringSidToSid(string StringSid, out IntPtr Sid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern IntPtr LocalFree(IntPtr hMem);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern bool LookupAccountSid(
+            string lpSystemName, IntPtr Sid,
+            StringBuilder Name, ref uint cchName,
+            StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName,
+            out SID_NAME_USE peUse);
+
+        // --- Public API ---
+        public static IEnumerable<(string Account, string Type, string ExpandedFrom)> GetMembers(string computer)
+        {
+            // 1) Получаем локализованное имя группы "Администраторы" по её SID
+            string adminsLocalName = GetLocalGroupNameBySid(computer, "S-1-5-32-544");
+
+            // 2) Читаем всех членов через NetLocalGroupGetMembers Level=2
+            IntPtr buf = IntPtr.Zero;
+            int entries, total;
+            int status = NetLocalGroupGetMembers(@"\\" + computer, adminsLocalName, 2, out buf, -1, out entries, out total, IntPtr.Zero);
+            if (status != 0) throw new Win32Exception(status);
+
+            try
+            {
+                int sz = Marshal.SizeOf<LOCALGROUP_MEMBERS_INFO_2>();
+                for (int i = 0; i < entries; i++)
+                {
+                    var item = Marshal.PtrToStructure<LOCALGROUP_MEMBERS_INFO_2>(IntPtr.Add(buf, i * sz));
+                    string acc = item.lgrmi2_domainandname ?? SidToString(item.lgrmi2_sid);
+                    string type = GetMemberTypeDescription(item.lgrmi2_sidusage, acc, computer);
+                    yield return (acc, type, "");
+                }
+            }
+            finally { NetApiBufferFree(buf); }
+        }
+
+        // --- Helpers ---
+        static string GetLocalGroupNameBySid(string computer, string sidStr)
+        {
+            if (!ConvertStringSidToSid(sidStr, out var sidPtr))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            try
+            {
+                uint cchName = 0, cchDom = 0;
+                LookupAccountSid(computer, sidPtr, null!, ref cchName, null!, ref cchDom, out _); // размер буферов
+                var name = new StringBuilder((int)cchName);
+                var dom = new StringBuilder((int)cchDom);
+                if (!LookupAccountSid(computer, sidPtr, name, ref cchName, dom, ref cchDom, out _))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                return name.ToString(); // локализованное имя локальной группы на целевом ПК
+            }
+            finally { LocalFree(sidPtr); }
+        }
+
+        static string SidToString(IntPtr sid)
+        {
+            // На случай "битых" записей без домена\имени
+            var si = new System.Security.Principal.SecurityIdentifier(sid);
+            return si.Value;
+        }
+
+        static string GetMemberTypeDescription(SID_NAME_USE sidUsage, string account, string computer)
+        {
+            // Определяем, локальная это учётка или доменная
+            bool isLocal = account.StartsWith(computer + "\\", StringComparison.OrdinalIgnoreCase);
+
+            string baseType = sidUsage switch
+            {
+                SID_NAME_USE.SidTypeUser => isLocal ? "Локальный пользователь" : "Доменный пользователь",
+                SID_NAME_USE.SidTypeGroup => isLocal ? "Локальная группа" : "Доменная группа",
+                SID_NAME_USE.SidTypeAlias => isLocal ? "Локальный алиас" : "Доменный алиас",
+                SID_NAME_USE.SidTypeWellKnownGroup => "Встроенная группа",
+                SID_NAME_USE.SidTypeComputer => "Компьютер домена",
+                _ => "Неизвестный тип"
+            };
+
+            // Для доменных пользователей пытаемся получить статус через AD
+            if (sidUsage == SID_NAME_USE.SidTypeUser && !isLocal)
+            {
+                try
+                {
+                    string statusInfo = GetUserAccountStatus(account);
+                    if (!string.IsNullOrEmpty(statusInfo))
+                        return $"{baseType} {statusInfo}";
+                }
+                catch { /* игнорируем ошибки получения статуса */ }
+            }
+
+            return baseType;
+        }
+
+        static string GetUserAccountStatus(string domainUser)
+        {
+            try
+            {
+                var parts = domainUser.Split('\\');
+                if (parts.Length != 2) return "";
+
+                string domain = parts[0];
+                string username = parts[1];
+
+                using (var ctx = new PrincipalContext(ContextType.Domain, domain))
+                using (var user = UserPrincipal.FindByIdentity(ctx, IdentityType.SamAccountName, username))
+                {
+                    if (user == null) return "";
+
+                    var flags = new List<string>();
+                    if (user.Enabled == false) flags.Add("ОТКЛЮЧЁН");
+                    if (user.IsAccountLockedOut()) flags.Add("ЗАБЛОКИРОВАН");
+                    if (user.PasswordNeverExpires == true) flags.Add("ПАРОЛЬ НЕ ИСТЕКАЕТ");
+
+                    return flags.Count > 0 ? $"[{string.Join(", ", flags)}]" : "";
+                }
+            }
+            catch
+            {
+                return "";
+            }
         }
     }
 }
