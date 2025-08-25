@@ -93,6 +93,16 @@ namespace who_admin
             StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName,
             out SID_NAME_USE peUse);
 
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        static extern bool LookupAccountName(
+            string lpSystemName,
+            string lpAccountName,
+            IntPtr Sid,
+            ref uint cbSid,
+            StringBuilder ReferencedDomainName,
+            ref uint cchReferencedDomainName,
+            out SID_NAME_USE peUse);
+
         // Исправленный LocalFree — в kernel32!
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
@@ -160,6 +170,36 @@ namespace who_admin
                 if (st != 0 && st != 1377) throw new Win32Exception(st);
             }
             finally { Marshal.FreeHGlobal(p); }
+        }
+
+        public static string DetectAccountType(string computer, string domainBackslashName)
+        {
+            // Пытаемся определить тип через LookupAccountName
+            // Для локальных аккаунтов лучше указывать systemName = имя ПК
+            string? systemName = null;
+            string accountName = domainBackslashName;
+
+            var parts = domainBackslashName.Split('\\');
+            if (parts.Length == 2 && parts[0].Equals(computer, StringComparison.OrdinalIgnoreCase))
+            {
+                systemName = computer;
+                accountName = parts[1];
+            }
+
+            uint cbSid = 0, cchDom = 0;
+            LookupAccountName(systemName ?? "", accountName, IntPtr.Zero, ref cbSid, null!, ref cchDom, out _);
+            if (cbSid == 0) return "Учетная запись";
+
+            IntPtr sid = Marshal.AllocHGlobal((int)cbSid);
+            var dom = new StringBuilder((int)cchDom);
+            try
+            {
+                if (!LookupAccountName(systemName ?? "", accountName, sid, ref cbSid, dom, ref cchDom, out var use))
+                    return "Учетная запись";
+
+                return (use == SID_NAME_USE.SidTypeUser || use == SID_NAME_USE.SidTypeComputer) ? "Пользователь" : "Группа";
+            }
+            finally { Marshal.FreeHGlobal(sid); }
         }
 
         // --- Helpers ---

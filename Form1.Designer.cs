@@ -28,259 +28,239 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.textBoxComputers = new System.Windows.Forms.TextBox();
-            this.buttonLoadFromAD = new System.Windows.Forms.Button();
-            this.buttonScan = new System.Windows.Forms.Button();
-            this.buttonStop = new System.Windows.Forms.Button();
-            this.checkBoxExpandGroups = new System.Windows.Forms.CheckBox();
-            this.numericUpDownThreads = new System.Windows.Forms.NumericUpDown();
-            this.buttonExport = new System.Windows.Forms.Button();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.labelStatus = new System.Windows.Forms.Label();
-            this.labelThreads = new System.Windows.Forms.Label();
-            this.groupBoxComputers = new System.Windows.Forms.GroupBox();
-            this.groupBoxControls = new System.Windows.Forms.GroupBox();
-            this.groupBoxResults = new System.Windows.Forms.GroupBox();
-            this.labelAddMembers = new System.Windows.Forms.Label();
-            this.textBoxAddMembers = new System.Windows.Forms.TextBox();
-            this.buttonAddToSelected = new System.Windows.Forms.Button();
-            this.buttonAddToAll = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreads)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
-            this.groupBoxComputers.SuspendLayout();
-            this.groupBoxControls.SuspendLayout();
-            this.groupBoxResults.SuspendLayout();
-            this.SuspendLayout();
+            textBoxComputers = new TextBox();
+            buttonLoadFromAD = new Button();
+            buttonScan = new Button();
+            buttonStop = new Button();
+            checkBoxExpandGroups = new CheckBox();
+            numericUpDownThreads = new NumericUpDown();
+            buttonExport = new Button();
+            dataGridView1 = new DataGridView();
+            progressBar1 = new ProgressBar();
+            labelStatus = new Label();
+            labelThreads = new Label();
+            groupBoxComputers = new GroupBox();
+            groupBoxControls = new GroupBox();
+            groupBoxResults = new GroupBox();
+            buttonAddToAll = new Button();
+            buttonAddToSelected = new Button();
+            textBoxAddMembers = new TextBox();
+            labelAddMembers = new Label();
+            ((System.ComponentModel.ISupportInitialize)numericUpDownThreads).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            groupBoxComputers.SuspendLayout();
+            groupBoxControls.SuspendLayout();
+            groupBoxResults.SuspendLayout();
+            SuspendLayout();
             // 
             // textBoxComputers
             // 
-            this.textBoxComputers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBoxComputers.Location = new System.Drawing.Point(6, 22);
-            this.textBoxComputers.Multiline = true;
-            this.textBoxComputers.Name = "textBoxComputers";
-            this.textBoxComputers.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxComputers.Size = new System.Drawing.Size(340, 480);
-            this.textBoxComputers.TabIndex = 0;
+            textBoxComputers.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            textBoxComputers.Location = new Point(6, 22);
+            textBoxComputers.Multiline = true;
+            textBoxComputers.Name = "textBoxComputers";
+            textBoxComputers.ScrollBars = ScrollBars.Vertical;
+            textBoxComputers.Size = new Size(340, 661);
+            textBoxComputers.TabIndex = 0;
             // 
             // buttonLoadFromAD
             // 
-            this.buttonLoadFromAD.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.buttonLoadFromAD.Location = new System.Drawing.Point(6, 508);
-            this.buttonLoadFromAD.Name = "buttonLoadFromAD";
-            this.buttonLoadFromAD.Size = new System.Drawing.Size(160, 30);
-            this.buttonLoadFromAD.TabIndex = 1;
-            this.buttonLoadFromAD.Text = "Загрузить ПК из AD";
-            this.buttonLoadFromAD.UseVisualStyleBackColor = true;
+            buttonLoadFromAD.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            buttonLoadFromAD.Location = new Point(6, 689);
+            buttonLoadFromAD.Name = "buttonLoadFromAD";
+            buttonLoadFromAD.Size = new Size(160, 30);
+            buttonLoadFromAD.TabIndex = 1;
+            buttonLoadFromAD.Text = "Загрузить ПК из AD";
+            buttonLoadFromAD.UseVisualStyleBackColor = true;
             // 
             // buttonScan
             // 
-            this.buttonScan.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.buttonScan.Location = new System.Drawing.Point(172, 508);
-            this.buttonScan.Name = "buttonScan";
-            this.buttonScan.Size = new System.Drawing.Size(100, 30);
-            this.buttonScan.TabIndex = 2;
-            this.buttonScan.Text = "Сканировать";
-            this.buttonScan.UseVisualStyleBackColor = true;
+            buttonScan.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            buttonScan.Location = new Point(172, 689);
+            buttonScan.Name = "buttonScan";
+            buttonScan.Size = new Size(100, 30);
+            buttonScan.TabIndex = 2;
+            buttonScan.Text = "Сканировать";
+            buttonScan.UseVisualStyleBackColor = true;
             // 
             // buttonStop
             // 
-            this.buttonStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.buttonStop.Location = new System.Drawing.Point(278, 508);
-            this.buttonStop.Name = "buttonStop";
-            this.buttonStop.Size = new System.Drawing.Size(68, 30);
-            this.buttonStop.TabIndex = 3;
-            this.buttonStop.Text = "Стоп";
-            this.buttonStop.UseVisualStyleBackColor = true;
+            buttonStop.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            buttonStop.Location = new Point(278, 689);
+            buttonStop.Name = "buttonStop";
+            buttonStop.Size = new Size(68, 30);
+            buttonStop.TabIndex = 3;
+            buttonStop.Text = "Стоп";
+            buttonStop.UseVisualStyleBackColor = true;
             // 
             // checkBoxExpandGroups
             // 
-            this.checkBoxExpandGroups.AutoSize = true;
-            this.checkBoxExpandGroups.Location = new System.Drawing.Point(6, 22);
-            this.checkBoxExpandGroups.Name = "checkBoxExpandGroups";
-            this.checkBoxExpandGroups.Size = new System.Drawing.Size(224, 19);
-            this.checkBoxExpandGroups.TabIndex = 4;
-            this.checkBoxExpandGroups.Text = "Разворачивать доменные группы";
-            this.checkBoxExpandGroups.UseVisualStyleBackColor = true;
+            checkBoxExpandGroups.AutoSize = true;
+            checkBoxExpandGroups.Location = new Point(6, 22);
+            checkBoxExpandGroups.Name = "checkBoxExpandGroups";
+            checkBoxExpandGroups.Size = new Size(211, 19);
+            checkBoxExpandGroups.TabIndex = 4;
+            checkBoxExpandGroups.Text = "Разворачивать доменные группы";
+            checkBoxExpandGroups.UseVisualStyleBackColor = true;
             // 
             // numericUpDownThreads
             // 
-            this.numericUpDownThreads.Location = new System.Drawing.Point(154, 47);
-            this.numericUpDownThreads.Maximum = new decimal(new int[] {
-            128,
-            0,
-            0,
-            0});
-            this.numericUpDownThreads.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numericUpDownThreads.Name = "numericUpDownThreads";
-            this.numericUpDownThreads.Size = new System.Drawing.Size(60, 23);
-            this.numericUpDownThreads.TabIndex = 5;
-            this.numericUpDownThreads.Value = new decimal(new int[] {
-            4,
-            0,
-            0,
-            0});
+            numericUpDownThreads.Location = new Point(154, 47);
+            numericUpDownThreads.Maximum = new decimal(new int[] { 128, 0, 0, 0 });
+            numericUpDownThreads.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numericUpDownThreads.Name = "numericUpDownThreads";
+            numericUpDownThreads.Size = new Size(60, 23);
+            numericUpDownThreads.TabIndex = 5;
+            numericUpDownThreads.Value = new decimal(new int[] { 4, 0, 0, 0 });
             // 
             // buttonExport
             // 
-            this.buttonExport.Location = new System.Drawing.Point(236, 47);
-            this.buttonExport.Name = "buttonExport";
-            this.buttonExport.Size = new System.Drawing.Size(100, 23);
-            this.buttonExport.TabIndex = 6;
-            this.buttonExport.Text = "Экспорт CSV";
-            this.buttonExport.UseVisualStyleBackColor = true;
+            buttonExport.Location = new Point(236, 47);
+            buttonExport.Name = "buttonExport";
+            buttonExport.Size = new Size(100, 23);
+            buttonExport.TabIndex = 6;
+            buttonExport.Text = "Экспорт CSV";
+            buttonExport.UseVisualStyleBackColor = true;
             // 
             // dataGridView1
             // 
-            this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(6, 22);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowTemplate.Height = 25;
-            this.dataGridView1.Size = new System.Drawing.Size(695, 480);
-            this.dataGridView1.TabIndex = 7;
+            dataGridView1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Location = new Point(6, 22);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.Size = new Size(1081, 621);
+            dataGridView1.TabIndex = 7;
             // 
             // progressBar1
             // 
-            this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar1.Location = new System.Drawing.Point(12, 620);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(1060, 20);
-            this.progressBar1.TabIndex = 8;
+            progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            progressBar1.Location = new Point(12, 801);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(1446, 20);
+            progressBar1.TabIndex = 8;
             // 
             // labelStatus
             // 
-            this.labelStatus.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.labelStatus.Location = new System.Drawing.Point(12, 646);
-            this.labelStatus.Name = "labelStatus";
-            this.labelStatus.Size = new System.Drawing.Size(1060, 20);
-            this.labelStatus.TabIndex = 9;
-            this.labelStatus.Text = "Готов к работе";
+            labelStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            labelStatus.Location = new Point(11, 833);
+            labelStatus.Name = "labelStatus";
+            labelStatus.Size = new Size(1446, 20);
+            labelStatus.TabIndex = 9;
+            labelStatus.Text = "Готов к работе";
             // 
             // labelThreads
             // 
-            this.labelThreads.AutoSize = true;
-            this.labelThreads.Location = new System.Drawing.Point(6, 49);
-            this.labelThreads.Name = "labelThreads";
-            this.labelThreads.Size = new System.Drawing.Size(142, 15);
-            this.labelThreads.TabIndex = 10;
-            this.labelThreads.Text = "Параллельных потоков:";
+            labelThreads.AutoSize = true;
+            labelThreads.Location = new Point(6, 49);
+            labelThreads.Name = "labelThreads";
+            labelThreads.Size = new Size(141, 15);
+            labelThreads.TabIndex = 10;
+            labelThreads.Text = "Параллельных потоков:";
             // 
             // groupBoxComputers
             // 
-            this.groupBoxComputers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.groupBoxComputers.Controls.Add(this.textBoxComputers);
-            this.groupBoxComputers.Controls.Add(this.buttonLoadFromAD);
-            this.groupBoxComputers.Controls.Add(this.buttonScan);
-            this.groupBoxComputers.Controls.Add(this.buttonStop);
-            this.groupBoxComputers.Location = new System.Drawing.Point(12, 12);
-            this.groupBoxComputers.Name = "groupBoxComputers";
-            this.groupBoxComputers.Size = new System.Drawing.Size(352, 544);
-            this.groupBoxComputers.TabIndex = 11;
-            this.groupBoxComputers.TabStop = false;
-            this.groupBoxComputers.Text = "Компьютеры для сканирования";
+            groupBoxComputers.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            groupBoxComputers.Controls.Add(textBoxComputers);
+            groupBoxComputers.Controls.Add(buttonLoadFromAD);
+            groupBoxComputers.Controls.Add(buttonScan);
+            groupBoxComputers.Controls.Add(buttonStop);
+            groupBoxComputers.Location = new Point(12, 12);
+            groupBoxComputers.Name = "groupBoxComputers";
+            groupBoxComputers.Size = new Size(352, 725);
+            groupBoxComputers.TabIndex = 11;
+            groupBoxComputers.TabStop = false;
+            groupBoxComputers.Text = "Компьютеры для сканирования";
             // 
             // groupBoxControls
             // 
-            this.groupBoxControls.Controls.Add(this.checkBoxExpandGroups);
-            this.groupBoxControls.Controls.Add(this.labelThreads);
-            this.groupBoxControls.Controls.Add(this.numericUpDownThreads);
-            this.groupBoxControls.Controls.Add(this.buttonExport);
-            this.groupBoxControls.Location = new System.Drawing.Point(370, 12);
-            this.groupBoxControls.Name = "groupBoxControls";
-            this.groupBoxControls.Size = new System.Drawing.Size(342, 76);
-            this.groupBoxControls.TabIndex = 12;
-            this.groupBoxControls.TabStop = false;
-            this.groupBoxControls.Text = "Параметры сканирования";
+            groupBoxControls.Controls.Add(checkBoxExpandGroups);
+            groupBoxControls.Controls.Add(labelThreads);
+            groupBoxControls.Controls.Add(numericUpDownThreads);
+            groupBoxControls.Controls.Add(buttonExport);
+            groupBoxControls.Location = new Point(370, 12);
+            groupBoxControls.Name = "groupBoxControls";
+            groupBoxControls.Size = new Size(342, 76);
+            groupBoxControls.TabIndex = 12;
+            groupBoxControls.TabStop = false;
+            groupBoxControls.Text = "Параметры сканирования";
             // 
             // groupBoxResults
             // 
-            this.groupBoxResults.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBoxResults.Controls.Add(this.dataGridView1);
-            this.groupBoxResults.Location = new System.Drawing.Point(370, 94);
-            this.groupBoxResults.Name = "groupBoxResults";
-            this.groupBoxResults.Size = new System.Drawing.Size(707, 508);
-            this.groupBoxResults.TabIndex = 13;
-            this.groupBoxResults.TabStop = false;
-            this.groupBoxResults.Text = "Результаты сканирования";
-            // 
-            // labelAddMembers
-            // 
-            this.labelAddMembers.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.labelAddMembers.AutoSize = true;
-            this.labelAddMembers.Location = new System.Drawing.Point(20, 615);
-            this.labelAddMembers.Name = "labelAddMembers";
-            this.labelAddMembers.Size = new System.Drawing.Size(63, 15);
-            this.labelAddMembers.TabIndex = 14;
-            this.labelAddMembers.Text = "Добавить:";
-            // 
-            // textBoxAddMembers
-            // 
-            this.textBoxAddMembers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxAddMembers.Location = new System.Drawing.Point(90, 612);
-            this.textBoxAddMembers.Name = "textBoxAddMembers";
-            this.textBoxAddMembers.PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser";
-            this.textBoxAddMembers.Size = new System.Drawing.Size(650, 23);
-            this.textBoxAddMembers.TabIndex = 15;
-            // 
-            // buttonAddToSelected
-            // 
-            this.buttonAddToSelected.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonAddToSelected.Location = new System.Drawing.Point(750, 610);
-            this.buttonAddToSelected.Name = "buttonAddToSelected";
-            this.buttonAddToSelected.Size = new System.Drawing.Size(150, 27);
-            this.buttonAddToSelected.TabIndex = 16;
-            this.buttonAddToSelected.Text = "На выбранные ПК";
-            this.buttonAddToSelected.UseVisualStyleBackColor = true;
+            groupBoxResults.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            groupBoxResults.Controls.Add(buttonAddToAll);
+            groupBoxResults.Controls.Add(dataGridView1);
+            groupBoxResults.Controls.Add(buttonAddToSelected);
+            groupBoxResults.Controls.Add(textBoxAddMembers);
+            groupBoxResults.Location = new Point(370, 94);
+            groupBoxResults.Name = "groupBoxResults";
+            groupBoxResults.Size = new Size(1093, 689);
+            groupBoxResults.TabIndex = 13;
+            groupBoxResults.TabStop = false;
+            groupBoxResults.Text = "Результаты сканирования";
             // 
             // buttonAddToAll
             // 
-            this.buttonAddToAll.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonAddToAll.Location = new System.Drawing.Point(910, 610);
-            this.buttonAddToAll.Name = "buttonAddToAll";
-            this.buttonAddToAll.Size = new System.Drawing.Size(100, 27);
-            this.buttonAddToAll.TabIndex = 17;
-            this.buttonAddToAll.Text = "На все ПК";
-            this.buttonAddToAll.UseVisualStyleBackColor = true;
+            buttonAddToAll.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonAddToAll.Location = new Point(924, 661);
+            buttonAddToAll.Name = "buttonAddToAll";
+            buttonAddToAll.Size = new Size(100, 27);
+            buttonAddToAll.TabIndex = 17;
+            buttonAddToAll.Text = "На все ПК";
+            buttonAddToAll.UseVisualStyleBackColor = true;
+            // 
+            // buttonAddToSelected
+            // 
+            buttonAddToSelected.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonAddToSelected.Location = new Point(768, 662);
+            buttonAddToSelected.Name = "buttonAddToSelected";
+            buttonAddToSelected.Size = new Size(150, 27);
+            buttonAddToSelected.TabIndex = 16;
+            buttonAddToSelected.Text = "На выбранные ПК";
+            buttonAddToSelected.UseVisualStyleBackColor = true;
+            // 
+            // textBoxAddMembers
+            // 
+            textBoxAddMembers.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            textBoxAddMembers.Location = new Point(6, 664);
+            textBoxAddMembers.Name = "textBoxAddMembers";
+            textBoxAddMembers.PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser";
+            textBoxAddMembers.Size = new Size(756, 23);
+            textBoxAddMembers.TabIndex = 15;
+            // 
+            // labelAddMembers
+            // 
+            labelAddMembers.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            labelAddMembers.AutoSize = true;
+            labelAddMembers.Location = new Point(290, 767);
+            labelAddMembers.Name = "labelAddMembers";
+            labelAddMembers.Size = new Size(62, 15);
+            labelAddMembers.TabIndex = 14;
+            labelAddMembers.Text = "Добавить:";
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1084, 681);
-            this.Controls.Add(this.buttonAddToAll);
-            this.Controls.Add(this.buttonAddToSelected);
-            this.Controls.Add(this.textBoxAddMembers);
-            this.Controls.Add(this.labelAddMembers);
-            this.Controls.Add(this.groupBoxResults);
-            this.Controls.Add(this.groupBoxControls);
-            this.Controls.Add(this.groupBoxComputers);
-            this.Controls.Add(this.labelStatus);
-            this.Controls.Add(this.progressBar1);
-            this.MinimumSize = new System.Drawing.Size(900, 600);
-            this.Name = "Form1";
-            this.Text = "Сканер локальных администраторов";
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreads)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
-            this.groupBoxComputers.ResumeLayout(false);
-            this.groupBoxComputers.PerformLayout();
-            this.groupBoxControls.ResumeLayout(false);
-            this.groupBoxControls.PerformLayout();
-            this.groupBoxResults.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1470, 862);
+            Controls.Add(labelAddMembers);
+            Controls.Add(groupBoxResults);
+            Controls.Add(groupBoxControls);
+            Controls.Add(groupBoxComputers);
+            Controls.Add(labelStatus);
+            Controls.Add(progressBar1);
+            MinimumSize = new Size(900, 600);
+            Name = "Form1";
+            Text = "Сканер локальных администраторов";
+            ((System.ComponentModel.ISupportInitialize)numericUpDownThreads).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            groupBoxComputers.ResumeLayout(false);
+            groupBoxComputers.PerformLayout();
+            groupBoxControls.ResumeLayout(false);
+            groupBoxControls.PerformLayout();
+            groupBoxResults.ResumeLayout(false);
+            groupBoxResults.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

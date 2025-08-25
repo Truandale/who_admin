@@ -280,6 +280,23 @@ namespace who_admin
             }
         }
 
+        void AppendRowIfMissing(string computer, string account, string memberType)
+        {
+            // Добавляем строку только если такой пары (ПК+учетка) ещё нет
+            if (InvokeRequired) { Invoke(new Action(() => AppendRowIfMissing(computer, account, memberType))); return; }
+
+            foreach (DataGridViewRow r in dataGridView1.Rows)
+            {
+                var pc = r.Cells["Computer"].Value?.ToString();
+                var acc = r.Cells["Account"].Value?.ToString();
+                if (string.Equals(pc, computer, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(acc, account, StringComparison.OrdinalIgnoreCase))
+                    return;
+            }
+
+            dataGridView1.Rows.Add("Удалить", computer, "OK", memberType, account, "NetAPI32", "");
+        }
+
         async void Grid_CellContentClick(object? sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -395,7 +412,13 @@ namespace who_admin
                     {
                         try
                         {
-                            foreach (var acc in accounts) LocalAdminsReader.AddLocalAdmin(pc, acc);
+                            foreach (var acc in accounts)
+                            {
+                                LocalAdminsReader.AddLocalAdmin(pc, acc); // вернётся норм, даже если уже член (мы игнорим 1378)
+                                // >>> МГНОВЕННОЕ ОТОБРАЖЕНИЕ В UI <<<
+                                var t = LocalAdminsReader.DetectAccountType(pc, acc);
+                                AppendRowIfMissing(pc, acc, t);
+                            }
                         }
                         catch (Exception ex)
                         {
