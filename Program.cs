@@ -106,7 +106,10 @@ namespace who_admin
             // 2) Читаем всех членов через NetLocalGroupGetMembers Level=2
             IntPtr buf = IntPtr.Zero;
             int entries, total;
-            int status = NetLocalGroupGetMembers(@"\\" + computer, adminsLocalName, 2, out buf, -1, out entries, out total, IntPtr.Zero);
+            string serverName = computer.Equals("localhost", StringComparison.OrdinalIgnoreCase) || 
+                               computer.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase) 
+                               ? null! : @"\\" + computer;
+            int status = NetLocalGroupGetMembers(serverName, adminsLocalName, 2, out buf, -1, out entries, out total, IntPtr.Zero);
             if (status != 0) throw new Win32Exception(status);
 
             try
@@ -131,7 +134,10 @@ namespace who_admin
             try
             {
                 Marshal.StructureToPtr(entry, p, false);
-                int st = NetLocalGroupAddMembers(@"\\\\" + computer, admins, 3, p, 1);
+                string serverName = computer.Equals("localhost", StringComparison.OrdinalIgnoreCase) || 
+                                   computer.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase) 
+                                   ? null! : @"\\" + computer;
+                int st = NetLocalGroupAddMembers(serverName, admins, 3, p, 1);
                 // 1378 = ERROR_MEMBER_IN_ALIAS — уже состоит в группе, не считаем за ошибку
                 if (st != 0 && st != 1378) throw new Win32Exception(st);
             }
@@ -146,7 +152,10 @@ namespace who_admin
             try
             {
                 Marshal.StructureToPtr(entry, p, false);
-                int st = NetLocalGroupDelMembers(@"\\\\" + computer, admins, 3, p, 1);
+                string serverName = computer.Equals("localhost", StringComparison.OrdinalIgnoreCase) || 
+                                   computer.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase) 
+                                   ? null! : @"\\" + computer;
+                int st = NetLocalGroupDelMembers(serverName, admins, 3, p, 1);
                 // 1377 = ERROR_NO_SUCH_MEMBER — уже нет в группе, ок
                 if (st != 0 && st != 1377) throw new Win32Exception(st);
             }
