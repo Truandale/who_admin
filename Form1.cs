@@ -63,31 +63,29 @@ namespace who_admin
 
             // Панель добавления аккаунтов
             var lblAdd = new Label { 
-                Location = new Point(20, 635), 
+                Location = new Point(20, 615), 
                 Size = new Size(80, 23), 
                 Text = "Добавить:",
                 Anchor = AnchorStyles.Left | AnchorStyles.Bottom
             };
             txtAddAccounts = new TextBox { 
-                Location = new Point(100, 632), 
+                Location = new Point(100, 612), 
                 Size = new Size(650, 23), 
                 Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 PlaceholderText = "DOMAIN\\user; DOMAIN\\group; PCNAME\\localuser"
             };
             btnAddToSelected = new Button { 
-                Location = new Point(760, 630), 
-                Size = new Size(200, 27), 
-                Text = "Добавить на выбранные ПК", 
+                Location = new Point(760, 610), 
+                Size = new Size(150, 27), 
+                Text = "На выбранные ПК", 
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
             };
             btnAddToAll = new Button { 
-                Location = new Point(970, 630), 
-                Size = new Size(120, 27), 
-                Text = "Добавить на все ПК", 
+                Location = new Point(920, 610), 
+                Size = new Size(100, 27), 
+                Text = "На все ПК", 
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right 
             };
-
-            Controls.AddRange(new Control[] { lblAdd, txtAddAccounts, btnAddToSelected, btnAddToAll });
 
             // Привязка событий
             buttonLoadFromAD.Click += async (s, e) => await LoadComputersFromAD();
@@ -102,6 +100,19 @@ namespace who_admin
 
             // Настройка статус-бара
             labelStatus.Text = "Готов к работе";
+
+            // Добавляем элементы управления для добавления/удаления в конце
+            // чтобы они были поверх GroupBox контролов
+            Controls.Add(lblAdd);
+            Controls.Add(txtAddAccounts);
+            Controls.Add(btnAddToSelected);
+            Controls.Add(btnAddToAll);
+            
+            // Поднимаем их на передний план
+            lblAdd.BringToFront();
+            txtAddAccounts?.BringToFront();
+            btnAddToSelected?.BringToFront();
+            btnAddToAll?.BringToFront();
         }
 
         async Task LoadComputersFromAD()
